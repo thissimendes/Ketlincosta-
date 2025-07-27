@@ -11,6 +11,7 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
+
 document.getElementById("formCadastroCompleto").addEventListener("submit", function (e) {
   e.preventDefault();
   const novoCliente = {
@@ -26,16 +27,21 @@ document.getElementById("formCadastroCompleto").addEventListener("submit", funct
       valorPago: parseFloat(document.getElementById("valorPago").value)
     }
   };
-  clientes.push(novoCliente);
-  salvarDados();
+  db.collection("clientes").add(novoCliente)
+  .then(() => {
+    console.log("Salvo no Firestore com sucesso!");
+    this.reset();
+    document.getElementById("formularioCompleto").classList.add("hidden");
+    carregarDadosDoFirestore(); // Atualiza a lista de eventos
+  })
+  .catch(error => {
+    console.error("Erro ao salvar no Firestore:", error);
+  });
+
   this.reset();
   document.getElementById("formularioCompleto").classList.add("hidden");
   filtrarEventosPorData();
 });
-
-function salvarDados() {
-  localStorage.setItem("clientes", JSON.stringify(clientes));
-}
 
 function abrirCadastroCompleto() {
   document.getElementById("formularioCompleto").classList.remove("hidden");
@@ -108,4 +114,24 @@ function buscarClientePorNome() {
     `;
     resultado.appendChild(div);
   });
+
+  let clientes = [];
+
+function carregarDadosDoFirestore() {
+  db.collection("clientes").get()
+    .then(snapshot => {
+      clientes = [];
+      snapshot.forEach(doc => {
+        clientes.push(doc.data());
+      });
+      filtrarEventosPorData(); // Atualiza a interface
+    })
+    .catch(error => {
+      console.error("Erro ao carregar do Firestore:", error);
+    });
+}
+
+carregarDadosDoFirestore(); // Chama ao iniciar
+
+  
 }
